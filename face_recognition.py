@@ -1,44 +1,73 @@
 import cv2
-import dlib
-import numpy as np
 
-# Load pre-trained face detector model from dlib
-detector = dlib.get_frontal_face_detector()
+face_cascade = cv2.CascadeClassifier(
+    cv2.data.haarcascades +
+    "haarcascade_frontalface_default.xml"
+)
 
-# Load video capture (0 for webcam, or provide video file path)
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
-# Check if the webcam is opened
-if not cap.isOpened():
-    print("Error: Could not open webcam.")
-    exit()
+count = 1
 
-print("Press 'q' to exit.")
+print("Press 'c' to capture photo")
+print("Press 'q' to exit")
 
 while True:
-    # Read a frame from the webcam
+
     ret, frame = cap.read()
+
     if not ret:
         break
 
-    # Convert the frame to grayscale
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(
+        frame,
+        cv2.COLOR_BGR2GRAY
+    )
 
-    # Detect faces in the frame
-    faces = detector(gray)
+    faces = face_cascade.detectMultiScale(
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5
+    )
 
-    # Draw rectangles around detected faces
-    for face in faces:
-        x, y, w, h = face.left(), face.top(), face.width(), face.height()
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    for (x,y,w,h) in faces:
 
-    # Show the output frame
-    cv2.imshow("Face Detection", frame)
+        cv2.rectangle(
+            frame,
+            (x,y),
+            (x+w,y+h),
+            (0,255,0),
+            2
+        )
 
-    # Exit the loop if 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    cv2.imshow(
+        "Face Detection",
+        frame
+    )
+
+    key = cv2.waitKey(1)
+
+    # Capture image
+
+    if key == ord('c'):
+
+        filename = f"captured_face_{count}.jpg"
+
+        cv2.imwrite(
+            filename,
+            frame
+        )
+
+        print("Saved:", filename)
+
+        count += 1
+
+    # Exit
+
+    elif key == ord('q'):
+
         break
 
-# Release resources
 cap.release()
+
 cv2.destroyAllWindows()
